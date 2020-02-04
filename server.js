@@ -10,28 +10,44 @@ var server = net.createServer(function(socket) {
 
     console.log(new Date() + "Client connected: " + socket.remoteAddress);
 
+console.log("inicio");
     socket.on('data', function (data) {
-        var re = /\(([0-9]{12})BR00([0-9]{2})([0-9]{2})([0-9]{2})([AV])([0-9]{2})([0-9]{2}\.[0-9]{4})([NS])([0-9]{3})([0-9]{2}\.[0-9]{4})([EW])([0-9]{3}\.[0-9])([0-9]{2})([0-9]{2})([0-9]{3}\.[0-9]{12}L[0-9]{8}).*\)/;
+       console.log("ingreso gps");
+           // console.log("data gps - " + JSON.stringify(data));
+            var re = /\(([0-9]{12})BR00([0-9]{2})([0-9]{2})([0-9]{2})([AV])([0-9]{2})([0-9]{2}\.[0-9]{4})([NS])([0-9]{3})([0-9]{2}\.[0-9]{4})([EW])([0-9]{3}\.[0-9])([0-9]{2})([0-9]{2})([0-9]{3}\.[0-9]{12}L[0-9]{8}).*\)/;
         var m;
+            console.log(data);
+            re = /.+/;
         if ((m = re.exec(data)) !== null) {
             if (m.index === re.lastIndex) {
                 re.lastIndex++;
             }
+
+
+console.log("data m  gps - " + JSON.stringify(m));
+dataGPS = m[0];
+                var res = dataGPS.split(",");
             var doc = {
                 type: "trackerinfo",
                 timestamp: new Date(),
-                trackerId: m[1],
-                trackerDate: new Date("20" + m[2] + "." + m[3] + "." + m[4] + " " + m[13] + ":" + m[14]),
-                trackingState: m[5],
-                latitudeDegree: parseInt(m[6]),
-                latitudePoint: parseFloat(m[7]),
-                latitudeFlag: m[8],
-                longitudeDegree: parseInt(m[9]),
-                longitudePoint: parseFloat(m[10]),
-                longitudeFlag: m[11],
-                speed: parseFloat(m[10]),
+                trackerId: res[0],
+                //trackerDate: new Date("20" + m[2] + "." + m[3] + "." + m[4] + " " + m[13] + ":" + m[14]),
+                trackerDate: new Date(),
+                trackingState: res[4],
+
+                latitudeDegree: parseInt(res[5]),
+                latitudePoint: parseFloat(res[5]),
+                latitudeFlag: res[5],
+
+                longitudeDegree: parseInt(res[7]),
+                longitudePoint: parseFloat(res[7]),
+                longitudeFlag: res[7],
+
+                urlMap: 'https://www.google.com/maps?q=N'+res[5]+',W'+res[7],
+
+                speed: parseFloat(res[9]),
                 origData: m[0],
-                unknown: m[15]
+                unknown: res[14]
             };
             console.log(doc.timestamp + " - " + doc.origData);
             db.insert(doc, function (err, newDoc) {
@@ -40,6 +56,7 @@ var server = net.createServer(function(socket) {
             });
         }
    });
+
 
     socket.on('close', function () {
         console.log(new Date() + " - Client disconnected: " + socket.remoteAddress);
@@ -87,6 +104,17 @@ router.get('/latest', auth, function(req, res) {
     });
 });
 
+router.get('/track', function(req, res) {
+    db.find({ type: "trackerinfo" }).sort({ timestamp: -1 }).limit(1).exec(function (err, docs) {
+        if (err)
+            res.send(500, err.message);
+        else
+        if (docs[0])
+            res.json(docs[0]);
+        else
+            res.send(404);
+    });
+});
 router.get('/latest/:trackerId', auth, function(req, res) {
     db.find({ $and: [ { trackerId: req.param("trackerId") }, { type: "trackerinfo" } ]}).sort({ timestamp: -1 }).limit(1).exec(function (err, docs) {
         if (err)
