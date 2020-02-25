@@ -115,6 +115,20 @@ router.get('/track', function(req, res) {
             res.send(404);
     });
 });
+
+router.get('/track/:trackerId', function(req, res) {
+    db.find({ $and: [ { trackerId: req.param("trackerId") }, { type: "trackerinfo" } ]}).sort({ timestamp: -1 }).limit(1).exec(function (err, docs) {
+        if (err)
+            res.send(500, err.message);
+        else
+            if (docs[0])
+                res.json(docs[0]);
+            else
+                res.send(404);
+    });
+});
+
+
 router.get('/latest/:trackerId', auth, function(req, res) {
     db.find({ $and: [ { trackerId: req.param("trackerId") }, { type: "trackerinfo" } ]}).sort({ timestamp: -1 }).limit(1).exec(function (err, docs) {
         if (err)
