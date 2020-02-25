@@ -27,28 +27,31 @@ console.log("inicio");
 console.log("data m  gps - " + JSON.stringify(m));
 dataGPS = m[0];
                 var res = dataGPS.split(",");
+            var trackId = res[0].split("*");
+            trackId = trackId[1];
             var doc = {
                 type: "trackerinfo",
                 timestamp: new Date(),
-                trackerId: res[0],
+                trackerId: trackId,
                 //trackerDate: new Date("20" + m[2] + "." + m[3] + "." + m[4] + " " + m[13] + ":" + m[14]),
                 trackerDate: new Date(),
                 trackingState: res[4],
 
-                latitudeDegree: parseInt(res[5]),
-                latitudePoint: parseFloat(res[5]),
-                latitudeFlag: res[5],
+                latitudeDegree: parseInt(res[4]),
+                latitudePoint: parseFloat(res[4]),
+                latitudeFlag: res[4],
 
-                longitudeDegree: parseInt(res[7]),
-                longitudePoint: parseFloat(res[7]),
-                longitudeFlag: res[7],
+                longitudeDegree: parseInt(res[6]),
+                longitudePoint: parseFloat(res[6]),
+                longitudeFlag: res[6],
 
-                urlMap: 'https://www.google.com/maps?q=N'+res[5]+',W'+res[7],
+                urlMap: 'https://www.google.com/maps?q=N'+res[4]+',W'+res[6],
 
                 speed: parseFloat(res[9]),
                 origData: m[0],
                 unknown: res[14]
             };
+
             console.log(doc.timestamp + " - " + doc.origData);
             db.insert(doc, function (err, newDoc) {
                 if (err)
